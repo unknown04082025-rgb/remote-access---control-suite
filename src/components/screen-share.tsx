@@ -160,8 +160,8 @@ export function ScreenShare({ devices, currentDevice }: ScreenShareProps) {
   const remoteDevices = devices.filter(d => d.id !== currentDevice?.id)
 
   return (
-    <div className="h-full flex">
-      <div className="w-72 glass-panel border-r border-[#2a2a3a] p-4 flex flex-col">
+    <div className="h-full flex flex-col lg:flex-row">
+      <div className="w-full lg:w-72 glass-panel border-b lg:border-b-0 lg:border-r border-[#2a2a3a] p-4 flex flex-col max-h-[35vh] lg:max-h-none overflow-y-auto">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Monitor className="w-5 h-5 text-[#b829dd]" />
           Screen Share
@@ -192,8 +192,8 @@ export function ScreenShare({ devices, currentDevice }: ScreenShareProps) {
               </button>
             ))
           ) : (
-            <div className="text-center py-8">
-              <MonitorOff className="w-10 h-10 text-[#5a5a70] mx-auto mb-2" />
+            <div className="text-center py-4 lg:py-8">
+              <MonitorOff className="w-8 lg:w-10 h-8 lg:h-10 text-[#5a5a70] mx-auto mb-2" />
               <p className="text-sm text-[#8888a0]">No remote devices available</p>
             </div>
           )}

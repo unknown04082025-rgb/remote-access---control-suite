@@ -69,28 +69,6 @@ export function generateDeviceId(): string {
   return `${timestamp}-${randomPart}`
 }
 
-export function generateDeviceFingerprint(): string {
-  if (typeof window === 'undefined') return 'server'
-  
-  const { osName, browserName } = getDeviceInfo()
-  const screenWidth = window.screen.width
-  const screenHeight = window.screen.height
-  const colorDepth = window.screen.colorDepth
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const language = navigator.language
-  
-  const fingerprintString = `${osName}-${browserName}-${screenWidth}x${screenHeight}-${colorDepth}-${timezone}-${language}`
-  
-  let hash = 0
-  for (let i = 0; i < fingerprintString.length; i++) {
-    const char = fingerprintString.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  
-  return Math.abs(hash).toString(36)
-}
-
 export function getDeviceInfo(): { osName: string; osVersion: string; browserName: string; browserVersion: string } {
   if (typeof window === 'undefined') {
     return { osName: 'Unknown', osVersion: '', browserName: 'Unknown', browserVersion: '' }
@@ -145,6 +123,28 @@ export function getDeviceInfo(): { osName: string; osVersion: string; browserNam
   }
 
   return { osName, osVersion, browserName, browserVersion }
+}
+
+export function generateDeviceFingerprint(): string {
+  if (typeof window === 'undefined') return 'server'
+  
+  const { osName, browserName } = getDeviceInfo()
+  const screenWidth = window.screen.width
+  const screenHeight = window.screen.height
+  const colorDepth = window.screen.colorDepth
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const language = navigator.language
+  
+  const fingerprintString = `${osName}-${browserName}-${screenWidth}x${screenHeight}-${colorDepth}-${timezone}-${language}`
+  
+  let hash = 0
+  for (let i = 0; i < fingerprintString.length; i++) {
+    const char = fingerprintString.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
+  }
+  
+  return Math.abs(hash).toString(36)
 }
 
 export async function getLocationInfo(): Promise<{ city: string; country: string; ip: string }> {
