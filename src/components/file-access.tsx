@@ -7,7 +7,7 @@ import {
   ChevronRight, Search, Download, Upload, Trash2,
   RefreshCw, Grid, List, Home, HardDrive, Laptop, Circle, Lock,
   Check, X, Eye, MoreVertical, FolderPlus, CloudUpload, Clock, HardDriveUpload,
-  CheckCircle2, XCircle, Timer, AlertCircle, Pause, Play, Infinity, Database
+  CheckCircle2, XCircle, Timer, AlertCircle, Pause, Play, Infinity, Database, PanelRightClose
 } from 'lucide-react'
 import { DevicePair, supabase, AccessRequest } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
@@ -126,6 +126,7 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [showStoragePanel, setShowStoragePanel] = useState(false)
   const [totalUploadStats, setTotalUploadStats] = useState({
     totalFiles: 0,
     completedFiles: 0,
@@ -711,46 +712,56 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
           )}
         </div>
 
-        {selectedDevice && accessStatus === 'approved' && (
-          <div className="mt-auto pt-4 border-t border-[#2a2a3a]">
-            <div className="bg-[#1a1a24] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Database className="w-4 h-4 text-[#00f0ff]" />
-                <span className="text-sm font-medium text-white">Storage</span>
-              </div>
-              <div className="mb-2">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-[#8888a0]">{formatFileSize(storageInfo.used)} used</span>
-                  <span className="text-[#5a5a70] flex items-center gap-1">
-                    {storageInfo.isUnlimited ? (
-                      <>
-                        <Infinity className="w-3 h-3" />
-                        Unlimited
-                      </>
-                    ) : (
-                      formatFileSize(storageInfo.total)
-                    )}
-                  </span>
+{selectedDevice && accessStatus === 'approved' && (
+            <div className="mt-auto pt-4 border-t border-[#2a2a3a]">
+              <button
+                onClick={() => setShowStoragePanel(true)}
+                className="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-[#1a1a24] rounded-xl hover:bg-[#1a1a24]/80 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Database className="w-4 h-4 text-[#00f0ff]" />
+                  <span className="text-sm font-medium text-white">Storage Info</span>
                 </div>
-                <div className="h-2 bg-[#2a2a3a] rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full transition-all duration-500"
-                    style={{ 
-                      width: storageInfo.isUnlimited 
-                        ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
-                        : `${(storageInfo.used / storageInfo.total) * 100}%` 
-                    }}
-                  />
+                <ChevronRight className="w-4 h-4 text-[#5a5a70]" />
+              </button>
+              <div className="hidden lg:block bg-[#1a1a24] rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Database className="w-4 h-4 text-[#00f0ff]" />
+                  <span className="text-sm font-medium text-white">Storage</span>
                 </div>
+                <div className="mb-2">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-[#8888a0]">{formatFileSize(storageInfo.used)} used</span>
+                    <span className="text-[#5a5a70] flex items-center gap-1">
+                      {storageInfo.isUnlimited ? (
+                        <>
+                          <Infinity className="w-3 h-3" />
+                          Unlimited
+                        </>
+                      ) : (
+                        formatFileSize(storageInfo.total)
+                      )}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-[#2a2a3a] rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full transition-all duration-500"
+                      style={{ 
+                        width: storageInfo.isUnlimited 
+                          ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
+                          : `${(storageInfo.used / storageInfo.total) * 100}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#5a5a70]">
+                  {storageInfo.isUnlimited 
+                    ? 'No storage limit - upload freely!' 
+                    : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
+                </p>
               </div>
-              <p className="text-[10px] text-[#5a5a70]">
-                {storageInfo.isUnlimited 
-                  ? 'No storage limit - upload freely!' 
-                  : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
-              </p>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       <div 
@@ -1298,37 +1309,166 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-        <DialogContent className="bg-[#12121a] border-[#2a2a3a] max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="text-white">{previewFile?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="pt-4">
-            {previewFile && (
-              <div className="flex items-center justify-center min-h-[300px] bg-[#0a0a0f] rounded-lg overflow-hidden">
-                {previewFile.type === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(previewFile.type) ? (
-                  <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-[60vh] object-contain" />
-                ) : previewFile.type === 'video' || ['mp4', 'webm', 'mov'].includes(previewFile.type) ? (
-                  <video src={previewFile.url} controls className="max-w-full max-h-[60vh]" />
-                ) : previewFile.type === 'audio' || ['mp3', 'wav', 'flac'].includes(previewFile.type) ? (
-                  <audio src={previewFile.url} controls className="w-full" />
-                ) : (
-                  <div className="text-center p-8">
-                    <File className="w-16 h-16 text-[#5a5a70] mx-auto mb-4" />
-                    <p className="text-[#8888a0]">Preview not available for this file type</p>
-                    <Button
-                      onClick={() => downloadFile(previewFile)}
-                      className="mt-4 bg-gradient-to-r from-[#00f0ff] to-[#00d4ff] text-[#0a0a0f]"
-                    >
-                      <Download className="w-4 h-4 mr-2" /> Download File
-                    </Button>
+<Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="bg-[#12121a] border-[#2a2a3a] max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">{previewFile?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="pt-4">
+              {previewFile && (
+                <div className="flex items-center justify-center min-h-[300px] bg-[#0a0a0f] rounded-lg overflow-hidden">
+                  {previewFile.type === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(previewFile.type) ? (
+                    <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-[60vh] object-contain" />
+                  ) : previewFile.type === 'video' || ['mp4', 'webm', 'mov'].includes(previewFile.type) ? (
+                    <video src={previewFile.url} controls className="max-w-full max-h-[60vh]" />
+                  ) : previewFile.type === 'audio' || ['mp3', 'wav', 'flac'].includes(previewFile.type) ? (
+                    <audio src={previewFile.url} controls className="w-full" />
+                  ) : (
+                    <div className="text-center p-8">
+                      <File className="w-16 h-16 text-[#5a5a70] mx-auto mb-4" />
+                      <p className="text-[#8888a0]">Preview not available for this file type</p>
+                      <Button
+                        onClick={() => downloadFile(previewFile)}
+                        className="mt-4 bg-gradient-to-r from-[#00f0ff] to-[#00d4ff] text-[#0a0a0f]"
+                      >
+                        <Download className="w-4 h-4 mr-2" /> Download File
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <AnimatePresence>
+          {showStoragePanel && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowStoragePanel(false)}
+                className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="lg:hidden fixed right-0 top-0 bottom-0 w-80 glass-panel border-l border-[#2a2a3a] z-50 flex flex-col"
+              >
+                <div className="flex items-center justify-between p-4 border-b border-[#2a2a3a]">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-5 h-5 text-[#00f0ff]" />
+                    <h3 className="text-lg font-semibold text-white">Storage Info</h3>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+                  <button
+                    onClick={() => setShowStoragePanel(false)}
+                    className="p-2 rounded-lg hover:bg-[#1a1a24] transition-colors text-[#8888a0] hover:text-white"
+                  >
+                    <PanelRightClose className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
+                  <div className="bg-[#1a1a24] rounded-xl p-4 mb-4">
+                    <div className="text-center mb-4">
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-[#00f0ff]/20 to-[#b829dd]/20 flex items-center justify-center">
+                        <HardDrive className="w-8 h-8 text-[#00f0ff]" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">{formatFileSize(storageInfo.used)}</p>
+                      <p className="text-sm text-[#8888a0]">Used Storage</p>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-[#8888a0]">Usage</span>
+                        <span className="text-[#5a5a70] flex items-center gap-1">
+                          {storageInfo.isUnlimited ? (
+                            <>
+                              <Infinity className="w-3 h-3" />
+                              Unlimited
+                            </>
+                          ) : (
+                            formatFileSize(storageInfo.total)
+                          )}
+                        </span>
+                      </div>
+                      <div className="h-3 bg-[#2a2a3a] rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ 
+                            width: storageInfo.isUnlimited 
+                              ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
+                              : `${(storageInfo.used / storageInfo.total) * 100}%` 
+                          }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                          className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[#5a5a70] text-center">
+                      {storageInfo.isUnlimited 
+                        ? 'No storage limit - upload freely!' 
+                        : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-[#1a1a24] rounded-xl p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-lg bg-[#39ff14]/20 flex items-center justify-center">
+                          <Folder className="w-5 h-5 text-[#39ff14]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">Files</p>
+                          <p className="text-xs text-[#8888a0]">{files.length} items in current folder</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#1a1a24] rounded-xl p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-lg bg-[#00f0ff]/20 flex items-center justify-center">
+                          <Laptop className="w-5 h-5 text-[#00f0ff]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">Device</p>
+                          <p className="text-xs text-[#8888a0]">{selectedDevice?.device_name || 'No device selected'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {uploadingFiles.length > 0 && (
+                      <div className="bg-[#1a1a24] rounded-xl p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-lg bg-[#ff6b35]/20 flex items-center justify-center">
+                            <Upload className="w-5 h-5 text-[#ff6b35]" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white">Uploads</p>
+                            <p className="text-xs text-[#8888a0]">{totalUploadStats.completedFiles}/{totalUploadStats.totalFiles} completed</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-[#2a2a3a]">
+                  <Button
+                    onClick={() => setShowStoragePanel(false)}
+                    className="w-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] text-white"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
     </div>
   )
 }
