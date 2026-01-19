@@ -7,7 +7,7 @@ import {
   Shield, Folder, Monitor, LogOut, Bell, 
   ChevronRight, Circle, Laptop, Smartphone,
   HardDrive, Users, Activity, Lock, Menu, X,
-  MapPin, Globe, Info, Settings
+  MapPin, Globe, Info
 } from 'lucide-react'
 import { useAuth, AuthProvider } from '@/lib/auth-context'
 import { supabase, DevicePair } from '@/lib/supabase'
@@ -44,7 +44,6 @@ function DashboardContent() {
   const [pendingRequests, setPendingRequests] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedDevice, setExpandedDevice] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
   const { user, device, logout, isLoading } = useAuth()
   const router = useRouter()
 
@@ -58,19 +57,8 @@ function DashboardContent() {
     if (user) {
       fetchDevices()
       fetchPendingRequests()
-      checkAdmin()
     }
   }, [user])
-
-  const checkAdmin = async () => {
-    if (!user) return
-    const { data } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    setIsAdmin(data?.is_admin || false)
-  }
 
   const fetchDevices = async () => {
     if (!user) return
@@ -133,15 +121,6 @@ function DashboardContent() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {isAdmin && (
-              <button 
-                onClick={() => router.push('/admin')}
-                className="p-2 rounded-lg hover:bg-[#1a1a24] transition-colors text-[#ff073a] hover:text-[#ff6b35]"
-                title="Admin Panel"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            )}
             <button className="relative p-2 rounded-lg hover:bg-[#1a1a24] transition-colors">
               <Bell className="w-5 h-5 text-[#8888a0]" />
               {pendingRequests > 0 && (

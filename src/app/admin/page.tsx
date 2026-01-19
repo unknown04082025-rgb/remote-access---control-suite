@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Shield, Users, Trash2, Search, RefreshCw, 
   Monitor, Folder, ChevronRight, Circle, ArrowLeft,
-  Laptop, Smartphone, MapPin, Globe, Clock, Eye,
-  FileText, Play, Calendar, User, AlertTriangle
+  Laptop, Smartphone, MapPin, Globe, Lock, Eye, EyeOff,
+  FileText, Calendar, User, AlertTriangle
 } from 'lucide-react'
 import { useAuth, AuthProvider } from '@/lib/auth-context'
 import { supabase, User as UserType, DevicePair, FileAccessLog, ScreenShareLog } from '@/lib/supabase'
@@ -28,7 +28,13 @@ interface UserWithDevices extends UserType {
   devices?: DevicePair[]
 }
 
+const ADMIN_PASSWORD = "SecureLink@Admin2024"
+
 function AdminContent() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('users')
   const [users, setUsers] = useState<UserWithDevices[]>([])
   const [devices, setDevices] = useState<DevicePair[]>([])
@@ -38,7 +44,6 @@ function AdminContent() {
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<UserWithDevices | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
   const { user, isLoading } = useAuth()
   const router = useRouter()
 
@@ -49,24 +54,18 @@ function AdminContent() {
   }, [user, isLoading, router])
 
   useEffect(() => {
-    if (user) {
-      checkAdmin()
-    }
-  }, [user])
-
-  const checkAdmin = async () => {
-    if (!user) return
-    const { data } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    
-    if (data?.is_admin) {
-      setIsAdmin(true)
+    if (isAuthenticated && user) {
       fetchData()
+    }
+  }, [isAuthenticated, user])
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true)
+      setPasswordError('')
     } else {
-      router.push('/dashboard')
+      setPasswordError('Incorrect password')
     }
   }
 
@@ -139,10 +138,84 @@ function AdminContent() {
     })
   }
 
-  if (isLoading || !isAdmin) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#ff073a] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] cyber-grid flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md"
+        >
+          <div className="glass-panel rounded-2xl p-8">
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#ff073a] to-[#ff6b35] p-[2px] mb-4">
+                <div className="w-full h-full rounded-2xl bg-[#0a0a0f] flex items-center justify-center">
+                  <Shield className="w-8 h-8 text-[#ff073a]" />
+                </div>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Admin Access</h1>
+              <p className="text-[#8888a0] text-center">Enter admin password to continue</p>
+            </div>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#8888a0]">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#5a5a70]" />
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      setPasswordError('')
+                    }}
+                    placeholder="Enter admin password"
+                    className="pl-11 pr-11 bg-[#1a1a24] border-[#2a2a3a] text-white placeholder:text-[#5a5a70] h-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5a5a70] hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passwordError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-[#ff073a]"
+                  >
+                    {passwordError}
+                  </motion.p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-[#ff073a] to-[#ff6b35] text-white font-semibold hover:opacity-90 transition-opacity"
+              >
+                Access Admin Panel
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard')}
+                className="w-full text-center text-sm text-[#8888a0] hover:text-white transition-colors"
+              >
+                Back to Dashboard
+              </button>
+            </form>
+          </div>
+        </motion.div>
       </div>
     )
   }
