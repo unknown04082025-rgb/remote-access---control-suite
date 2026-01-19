@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Shield, Folder, Monitor, LogOut, Bell, 
   ChevronRight, Circle, Laptop, Smartphone,
   HardDrive, Users, Activity, Lock, Menu, X,
-  MapPin, Globe, Info
+  MapPin, Globe, Info, Check, XIcon, Clock
 } from 'lucide-react'
 import { useAuth, AuthProvider } from '@/lib/auth-context'
 import { supabase, DevicePair } from '@/lib/supabase'
@@ -16,6 +16,16 @@ import { FileAccess } from '@/components/file-access'
 import { ScreenShare } from '@/components/screen-share'
 
 type Section = 'overview' | 'files' | 'screen'
+
+interface AccessRequest {
+  id: string
+  requester_device_id: string
+  target_device_id: string
+  request_type: 'file_access' | 'screen_share'
+  status: 'pending' | 'approved' | 'denied'
+  created_at: string
+  requester_device?: DevicePair
+}
 
 const getOsIcon = (osName?: string) => {
   if (!osName) return '💻'
@@ -42,8 +52,11 @@ function DashboardContent() {
   const [activeSection, setActiveSection] = useState<Section>('overview')
   const [devices, setDevices] = useState<DevicePair[]>([])
   const [pendingRequests, setPendingRequests] = useState(0)
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([])
+  const [showNotifications, setShowNotifications] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedDevice, setExpandedDevice] = useState<string | null>(null)
+  const notificationRef = useRef<HTMLDivElement>(null)
   const { user, device, logout, isLoading } = useAuth()
   const router = useRouter()
 
@@ -60,6 +73,16 @@ function DashboardContent() {
     }
   }, [user])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const fetchDevices = async () => {
     if (!user) return
     const { data } = await supabase
@@ -72,13 +95,42 @@ function DashboardContent() {
 
   const fetchPendingRequests = async () => {
     if (!device) return
-    const { count } = await supabase
+    const { data, count } = await supabase
       .from('access_requests')
-      .select('*', { count: 'exact', head: true })
+      .select('*, requester_device:device_pairs!access_requests_requester_device_id_fkey(*)', { count: 'exact' })
       .eq('target_device_id', device.id)
       .eq('status', 'pending')
+      .order('created_at', { ascending: false })
     
     setPendingRequests(count || 0)
+    if (data) {
+      setAccessRequests(data.map(r => ({
+        ...r,
+        requester_device: r.requester_device
+      })))
+    }
+  }
+
+  const handleRequestAction = async (requestId: string, action: 'approved' | 'denied') => {
+    const { error } = await supabase
+      .from('access_requests')
+      .update({ status: action })
+      .eq('id', requestId)
+    
+    if (!error) {
+      setAccessRequests(prev => prev.filter(r => r.id !== requestId))
+      setPendingRequests(prev => Math.max(0, prev - 1))
+    }
+  }
+
+  const formatTimeAgo = (date: string) => {
+    const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+    if (seconds < 60) return 'Just now'
+    const minutes = Math.floor(seconds / 60)
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    return `${Math.floor(hours / 24)}d ago`
   }
 
   const handleLogout = () => {
@@ -120,16 +172,110 @@ function DashboardContent() {
             <span className="text-lg font-semibold text-white hidden sm:block">SecureLink</span>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
-            <button className="relative p-2 rounded-lg hover:bg-[#1a1a24] transition-colors">
-              <Bell className="w-5 h-5 text-[#8888a0]" />
-              {pendingRequests > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-[#ff073a] rounded-full text-[10px] font-bold text-white flex items-center justify-center">
-                  {pendingRequests}
-                </span>
-              )}
-            </button>
-            <div className="h-8 w-px bg-[#2a2a3a] hidden sm:block" />
+<div className="flex items-center gap-2 md:gap-4">
+              <div className="relative" ref={notificationRef}>
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-lg hover:bg-[#1a1a24] transition-colors"
+                >
+                  <Bell className="w-5 h-5 text-[#8888a0]" />
+                  {pendingRequests > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#ff073a] rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                      {pendingRequests}
+                    </span>
+                  )}
+                </button>
+                
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-80 md:w-96 glass-panel rounded-2xl border border-[#2a2a3a] shadow-2xl overflow-hidden z-50"
+                    >
+                      <div className="p-4 border-b border-[#2a2a3a]">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                          {pendingRequests > 0 && (
+                            <span className="text-xs text-[#ff6b35] bg-[#ff6b35]/10 px-2 py-0.5 rounded-full">
+                              {pendingRequests} pending
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                        {accessRequests.length === 0 ? (
+                          <div className="p-8 text-center">
+                            <Bell className="w-10 h-10 text-[#3a3a4a] mx-auto mb-3" />
+                            <p className="text-sm text-[#8888a0]">No pending requests</p>
+                            <p className="text-xs text-[#5a5a70] mt-1">Access requests will appear here</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-[#2a2a3a]">
+                            {accessRequests.map((request) => (
+                              <motion.div
+                                key={request.id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="p-4 hover:bg-[#1a1a24]/50 transition-colors"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                    request.request_type === 'file_access' 
+                                      ? 'bg-[#39ff14]/20' 
+                                      : 'bg-[#b829dd]/20'
+                                  }`}>
+                                    {request.request_type === 'file_access' ? (
+                                      <Folder className="w-5 h-5 text-[#39ff14]" />
+                                    ) : (
+                                      <Monitor className="w-5 h-5 text-[#b829dd]" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-white font-medium">
+                                      {request.request_type === 'file_access' ? 'File Access' : 'Screen Share'} Request
+                                    </p>
+                                    <p className="text-xs text-[#8888a0] truncate">
+                                      From: {request.requester_device?.device_name || 'Unknown Device'}
+                                    </p>
+                                    <div className="flex items-center gap-1 mt-1 text-xs text-[#5a5a70]">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{formatTimeAgo(request.created_at)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 mt-3">
+                                  <Button
+                                    onClick={() => handleRequestAction(request.id, 'approved')}
+                                    size="sm"
+                                    className="flex-1 h-8 bg-[#39ff14]/20 text-[#39ff14] hover:bg-[#39ff14]/30 border-0"
+                                  >
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleRequestAction(request.id, 'denied')}
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 h-8 border-[#ff073a]/50 text-[#ff073a] hover:bg-[#ff073a]/10"
+                                  >
+                                    <XIcon className="w-4 h-4 mr-1" />
+                                    Deny
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div className="h-8 w-px bg-[#2a2a3a] hidden sm:block" />
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-white">{user.username}</p>
