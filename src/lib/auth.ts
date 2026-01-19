@@ -161,6 +161,18 @@ export async function getLocationInfo(): Promise<{ city: string; country: string
   }
 }
 
+export async function checkExistingDevice(userId: string): Promise<{ device: { id: string; device_id: string; device_name: string } | null }> {
+  const fingerprint = generateDeviceFingerprint()
+  const { data: existingDevice } = await supabase
+    .from('device_pairs')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('fingerprint', fingerprint)
+    .single()
+  
+  return { device: existingDevice }
+}
+
 export async function registerDevice(userId: string, deviceName: string): Promise<{ device: { id: string; device_id: string } | null; error: string | null; isExisting?: boolean }> {
   try {
     const fingerprint = generateDeviceFingerprint()
@@ -178,7 +190,6 @@ export async function registerDevice(userId: string, deviceName: string): Promis
       const { data: updatedDevice, error: updateError } = await supabase
         .from('device_pairs')
         .update({
-          device_name: deviceName,
           is_online: true,
           last_seen: new Date().toISOString(),
           os_name: osName,

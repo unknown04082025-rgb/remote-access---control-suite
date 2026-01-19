@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Lock, User, Mail, Eye, EyeOff, Laptop, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { signUp, signIn, registerDevice } from '@/lib/auth'
+import { signUp, signIn, registerDevice, checkExistingDevice, generateDeviceFingerprint } from '@/lib/auth'
 import { useAuth } from '@/lib/auth-context'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [existingDeviceName, setExistingDeviceName] = useState<string | null>(null)
   
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
@@ -40,17 +41,33 @@ export function AuthForm() {
       }
 
       if (user) {
-        const { device, error: deviceError } = await registerDevice(user.id, deviceName || 'Unknown Device')
-        if (deviceError) {
-          setError(deviceError)
-          setLoading(false)
-          return
-        }
+        const { device: existingDevice } = await checkExistingDevice(user.id)
         
-        setUser(user)
-        setDevice(device as any)
-        setSuccess('Login successful! Redirecting...')
-        setTimeout(() => router.push('/dashboard'), 1500)
+        if (existingDevice) {
+          const { device, error: deviceError } = await registerDevice(user.id, existingDevice.device_name)
+          if (deviceError) {
+            setError(deviceError)
+            setLoading(false)
+            return
+          }
+          
+          setUser(user)
+          setDevice(device as any)
+          setSuccess(`Welcome back! Logged in as ${existingDevice.device_name}`)
+          setTimeout(() => router.push('/dashboard'), 1500)
+        } else {
+          const { device, error: deviceError } = await registerDevice(user.id, deviceName || 'Unknown Device')
+          if (deviceError) {
+            setError(deviceError)
+            setLoading(false)
+            return
+          }
+          
+          setUser(user)
+          setDevice(device as any)
+          setSuccess('Login successful! Redirecting...')
+          setTimeout(() => router.push('/dashboard'), 1500)
+        }
       }
     } else {
       if (!email || !username || !password) {
