@@ -7,6 +7,9 @@ import Script from "next/script";
 export const metadata: Metadata = {
   title: "DataDrop",
   description: "Remote Access Control System",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
