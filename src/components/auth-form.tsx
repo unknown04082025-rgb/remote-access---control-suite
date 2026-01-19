@@ -122,7 +122,7 @@ export function AuthForm() {
                 </div>
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">SecureLink</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">DataDrop</h1>
             <p className="text-[#8888a0] text-sm mt-1">Remote Access Control System</p>
           </div>
 

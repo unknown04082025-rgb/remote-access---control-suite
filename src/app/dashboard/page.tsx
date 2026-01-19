@@ -169,7 +169,7 @@ function DashboardContent() {
                 <Shield className="w-5 h-5 text-[#00f0ff]" />
               </div>
             </div>
-            <span className="text-lg font-semibold text-white hidden sm:block">SecureLink</span>
+            <span className="text-lg font-semibold text-white hidden sm:block">DataDrop</span>
           </div>
 
 <div className="flex items-center gap-2 md:gap-4">
@@ -319,7 +319,7 @@ function DashboardContent() {
                       <Shield className="w-5 h-5 text-[#00f0ff]" />
                     </div>
                   </div>
-                  <span className="text-lg font-semibold text-white">SecureLink</span>
+                  <span className="text-lg font-semibold text-white">DataDrop</span>
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
