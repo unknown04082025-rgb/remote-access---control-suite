@@ -125,28 +125,6 @@ export function getDeviceInfo(): { osName: string; osVersion: string; browserNam
   return { osName, osVersion, browserName, browserVersion }
 }
 
-export function generateDeviceFingerprint(): string {
-  if (typeof window === 'undefined') return 'server'
-  
-  const { osName, browserName } = getDeviceInfo()
-  const screenWidth = window.screen.width
-  const screenHeight = window.screen.height
-  const colorDepth = window.screen.colorDepth
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const language = navigator.language
-  
-  const fingerprintString = `${osName}-${browserName}-${screenWidth}x${screenHeight}-${colorDepth}-${timezone}-${language}`
-  
-  let hash = 0
-  for (let i = 0; i < fingerprintString.length; i++) {
-    const char = fingerprintString.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  
-  return Math.abs(hash).toString(36)
-}
-
 export async function getLocationInfo(): Promise<{ city: string; country: string; ip: string }> {
   try {
     const response = await fetch('/api/device-info')
@@ -161,57 +139,11 @@ export async function getLocationInfo(): Promise<{ city: string; country: string
   }
 }
 
-export async function checkExistingDevice(userId: string): Promise<{ device: { id: string; device_id: string; device_name: string } | null }> {
-  const fingerprint = generateDeviceFingerprint()
-  const { data: existingDevice } = await supabase
-    .from('device_pairs')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('fingerprint', fingerprint)
-    .single()
-  
-  return { device: existingDevice }
-}
-
-export async function registerDevice(userId: string, deviceName: string): Promise<{ device: { id: string; device_id: string } | null; error: string | null; isExisting?: boolean }> {
+export async function registerDevice(userId: string, deviceName: string): Promise<{ device: { id: string; device_id: string } | null; error: string | null }> {
   try {
-    const fingerprint = generateDeviceFingerprint()
+    const deviceId = generateDeviceId()
     const { osName, osVersion, browserName, browserVersion } = getDeviceInfo()
     const { city, country, ip } = await getLocationInfo()
-    
-    const { data: existingDevice } = await supabase
-      .from('device_pairs')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('fingerprint', fingerprint)
-      .single()
-    
-    if (existingDevice) {
-      const { data: updatedDevice, error: updateError } = await supabase
-        .from('device_pairs')
-        .update({
-          is_online: true,
-          last_seen: new Date().toISOString(),
-          os_name: osName,
-          os_version: osVersion,
-          browser_name: browserName,
-          browser_version: browserVersion,
-          location_city: city,
-          location_country: country,
-          ip_address: ip
-        })
-        .eq('id', existingDevice.id)
-        .select()
-        .single()
-      
-      if (updateError) {
-        return { device: null, error: updateError.message }
-      }
-      
-      return { device: updatedDevice, error: null, isExisting: true }
-    }
-    
-    const deviceId = generateDeviceId()
     
     const { data, error } = await supabase
       .from('device_pairs')
@@ -220,7 +152,6 @@ export async function registerDevice(userId: string, deviceName: string): Promis
         device_name: deviceName, 
         device_id: deviceId, 
         is_online: true,
-        fingerprint: fingerprint,
         os_name: osName,
         os_version: osVersion,
         browser_name: browserName,
@@ -236,7 +167,7 @@ export async function registerDevice(userId: string, deviceName: string): Promis
       return { device: null, error: error.message }
     }
 
-    return { device: data, error: null, isExisting: false }
+    return { device: data, error: null }
   } catch (err) {
     return { device: null, error: 'Failed to register device' }
   }

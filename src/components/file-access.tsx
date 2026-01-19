@@ -7,7 +7,7 @@ import {
   ChevronRight, Search, Download, Upload, Trash2,
   RefreshCw, Grid, List, Home, HardDrive, Laptop, Circle, Lock,
   Check, X, Eye, MoreVertical, FolderPlus, CloudUpload, Clock, HardDriveUpload,
-  CheckCircle2, XCircle, Timer, AlertCircle, Pause, Play, Infinity, Database, PanelRightClose
+  CheckCircle2, XCircle, Timer, AlertCircle, Pause, Play, Infinity, Database
 } from 'lucide-react'
 import { DevicePair, supabase, AccessRequest } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
@@ -126,7 +126,6 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
-  const [showStoragePanel, setShowStoragePanel] = useState(false)
   const [totalUploadStats, setTotalUploadStats] = useState({
     totalFiles: 0,
     completedFiles: 0,
@@ -622,8 +621,8 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
   const isUploading = uploadingFiles.some(f => f.status === 'uploading')
 
   return (
-    <div className="h-full flex flex-col lg:flex-row">
-      <div className="w-full lg:w-72 glass-panel border-b lg:border-b-0 lg:border-r border-[#2a2a3a] p-4 flex flex-col overflow-hidden max-h-[40vh] lg:max-h-none">
+    <div className="h-full flex">
+      <div className="w-72 glass-panel border-r border-[#2a2a3a] p-4 flex flex-col overflow-hidden">
         <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <HardDrive className="w-5 h-5 text-[#39ff14]" />
           Select Device
@@ -712,56 +711,46 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
           )}
         </div>
 
-{selectedDevice && accessStatus === 'approved' && (
-            <div className="mt-auto pt-4 border-t border-[#2a2a3a]">
-              <button
-                onClick={() => setShowStoragePanel(true)}
-                className="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-[#1a1a24] rounded-xl hover:bg-[#1a1a24]/80 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-[#00f0ff]" />
-                  <span className="text-sm font-medium text-white">Storage Info</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#5a5a70]" />
-              </button>
-              <div className="hidden lg:block bg-[#1a1a24] rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Database className="w-4 h-4 text-[#00f0ff]" />
-                  <span className="text-sm font-medium text-white">Storage</span>
-                </div>
-                <div className="mb-2">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-[#8888a0]">{formatFileSize(storageInfo.used)} used</span>
-                    <span className="text-[#5a5a70] flex items-center gap-1">
-                      {storageInfo.isUnlimited ? (
-                        <>
-                          <Infinity className="w-3 h-3" />
-                          Unlimited
-                        </>
-                      ) : (
-                        formatFileSize(storageInfo.total)
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-[#2a2a3a] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full transition-all duration-500"
-                      style={{ 
-                        width: storageInfo.isUnlimited 
-                          ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
-                          : `${(storageInfo.used / storageInfo.total) * 100}%` 
-                      }}
-                    />
-                  </div>
-                </div>
-                <p className="text-[10px] text-[#5a5a70]">
-                  {storageInfo.isUnlimited 
-                    ? 'No storage limit - upload freely!' 
-                    : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
-                </p>
+        {selectedDevice && accessStatus === 'approved' && (
+          <div className="mt-auto pt-4 border-t border-[#2a2a3a]">
+            <div className="bg-[#1a1a24] rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Database className="w-4 h-4 text-[#00f0ff]" />
+                <span className="text-sm font-medium text-white">Storage</span>
               </div>
+              <div className="mb-2">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-[#8888a0]">{formatFileSize(storageInfo.used)} used</span>
+                  <span className="text-[#5a5a70] flex items-center gap-1">
+                    {storageInfo.isUnlimited ? (
+                      <>
+                        <Infinity className="w-3 h-3" />
+                        Unlimited
+                      </>
+                    ) : (
+                      formatFileSize(storageInfo.total)
+                    )}
+                  </span>
+                </div>
+                <div className="h-2 bg-[#2a2a3a] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full transition-all duration-500"
+                    style={{ 
+                      width: storageInfo.isUnlimited 
+                        ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
+                        : `${(storageInfo.used / storageInfo.total) * 100}%` 
+                    }}
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-[#5a5a70]">
+                {storageInfo.isUnlimited 
+                  ? 'No storage limit - upload freely!' 
+                  : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
+              </p>
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       <div 
@@ -835,107 +824,103 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
           </div>
         ) : (
           <>
-            <div className="h-14 lg:h-16 border-b border-[#2a2a3a] px-4 lg:px-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 lg:gap-0 py-2 lg:py-0">
-                <div className="flex items-center gap-2 lg:gap-4 overflow-x-auto w-full lg:w-auto">
-                  <div className="flex items-center gap-2 text-sm flex-shrink-0">
-                    <button 
-                      onClick={() => setCurrentPath('/')}
-                      className="text-[#8888a0] hover:text-white transition-colors"
-                    >
-                      <Home className="w-4 h-4" />
-                    </button>
-                    {currentPath.split('/').filter(Boolean).map((part, index, arr) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <ChevronRight className="w-4 h-4 text-[#5a5a70]" />
-                        <button
-                          onClick={() => setCurrentPath('/' + arr.slice(0, index + 1).join('/'))}
-                          className={`${
-                            index === arr.length - 1 ? 'text-white' : 'text-[#8888a0] hover:text-white'
-                          } transition-colors truncate max-w-[80px] lg:max-w-none`}
-                        >
-                          {part}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 lg:gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    size="sm"
-                    className="bg-gradient-to-r from-[#39ff14] to-[#20cc10] text-[#0a0a0f] hover:from-[#20cc10] hover:to-[#18aa0c] flex-shrink-0"
+            <div className="h-16 border-b border-[#2a2a3a] px-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <button 
+                    onClick={() => setCurrentPath('/')}
+                    className="text-[#8888a0] hover:text-white transition-colors"
                   >
-                    <Upload className="w-4 h-4 lg:mr-2" />
-                    <span className="hidden lg:inline">Upload</span>
-                  </Button>
-                  {uploadingFiles.length > 0 && (
-                    <Button
-                      onClick={() => setShowUploadModal(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-[#00f0ff]/50 text-[#00f0ff] hover:bg-[#00f0ff]/10 relative flex-shrink-0"
-                    >
-                      <HardDriveUpload className="w-4 h-4 lg:mr-2" />
-                      <span className="hidden lg:inline">{isUploading ? 'Uploading...' : 'Uploads'}</span>
-                      <span className="ml-1 lg:ml-2 px-1.5 py-0.5 bg-[#00f0ff]/20 rounded text-xs">
-                        {totalUploadStats.completedFiles}/{totalUploadStats.totalFiles}
-                      </span>
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => setShowNewFolder(true)}
-                    variant="outline"
-                    size="sm"
-                    className="border-[#2a2a3a] text-white hover:bg-[#1a1a24] flex-shrink-0"
-                  >
-                    <FolderPlus className="w-4 h-4 lg:mr-2" />
-                    <span className="hidden lg:inline">New Folder</span>
-                  </Button>
-                  <Button
-                    onClick={fetchFiles}
-                    variant="outline"
-                    size="icon"
-                    className="border-[#2a2a3a] text-white hover:bg-[#1a1a24] flex-shrink-0 h-8 w-8"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  </Button>
-                  <div className="relative hidden md:block">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a5a70]" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search files..."
-                      className="w-32 lg:w-48 pl-10 bg-[#1a1a24] border-[#2a2a3a] text-white placeholder:text-[#5a5a70] h-8"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1 p-1 bg-[#1a1a24] rounded-lg flex-shrink-0">
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-1.5 lg:p-2 rounded-md transition-colors ${
-                        viewMode === 'list' ? 'bg-[#2a2a3a] text-white' : 'text-[#5a5a70]'
-                      }`}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-1.5 lg:p-2 rounded-md transition-colors ${
-                        viewMode === 'grid' ? 'bg-[#2a2a3a] text-white' : 'text-[#5a5a70]'
-                      }`}
-                    >
-                      <Grid className="w-4 h-4" />
-                    </button>
-                  </div>
+                    <Home className="w-4 h-4" />
+                  </button>
+                  {currentPath.split('/').filter(Boolean).map((part, index, arr) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <ChevronRight className="w-4 h-4 text-[#5a5a70]" />
+                      <button
+                        onClick={() => setCurrentPath('/' + arr.slice(0, index + 1).join('/'))}
+                        className={`${
+                          index === arr.length - 1 ? 'text-white' : 'text-[#8888a0] hover:text-white'
+                        } transition-colors`}
+                      >
+                        {part}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-gradient-to-r from-[#39ff14] to-[#20cc10] text-[#0a0a0f] hover:from-[#20cc10] hover:to-[#18aa0c]"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload
+                </Button>
+                {uploadingFiles.length > 0 && (
+                  <Button
+                    onClick={() => setShowUploadModal(true)}
+                    variant="outline"
+                    className="border-[#00f0ff]/50 text-[#00f0ff] hover:bg-[#00f0ff]/10 relative"
+                  >
+                    <HardDriveUpload className="w-4 h-4 mr-2" />
+                    {isUploading ? 'Uploading...' : 'Uploads'}
+                    <span className="ml-2 px-1.5 py-0.5 bg-[#00f0ff]/20 rounded text-xs">
+                      {totalUploadStats.completedFiles}/{totalUploadStats.totalFiles}
+                    </span>
+                  </Button>
+                )}
+                <Button
+                  onClick={() => setShowNewFolder(true)}
+                  variant="outline"
+                  className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
+                >
+                  <FolderPlus className="w-4 h-4 mr-2" /> New Folder
+                </Button>
+                <Button
+                  onClick={fetchFiles}
+                  variant="outline"
+                  size="icon"
+                  className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5a5a70]" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search files..."
+                    className="w-48 pl-10 bg-[#1a1a24] border-[#2a2a3a] text-white placeholder:text-[#5a5a70]"
+                  />
+                </div>
+                <div className="flex items-center gap-1 p-1 bg-[#1a1a24] rounded-lg">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'list' ? 'bg-[#2a2a3a] text-white' : 'text-[#5a5a70]'
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === 'grid' ? 'bg-[#2a2a3a] text-white' : 'text-[#5a5a70]'
+                    }`}
+                  >
+                    <Grid className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
 
             <AnimatePresence>
               {isDragging && (
@@ -955,116 +940,113 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
               )}
             </AnimatePresence>
 
-              <div className="flex-1 overflow-auto custom-scrollbar p-4 lg:p-6 relative">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <RefreshCw className="w-8 h-8 text-[#00f0ff] animate-spin" />
+            <div className="flex-1 overflow-auto custom-scrollbar p-6 relative">
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <RefreshCw className="w-8 h-8 text-[#00f0ff] animate-spin" />
+                </div>
+              ) : filteredFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-[#1a1a24] flex items-center justify-center">
+                    <Folder className="w-10 h-10 text-[#5a5a70]" />
                   </div>
-                ) : filteredFiles.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <div className="w-16 lg:w-20 h-16 lg:h-20 mx-auto mb-4 rounded-2xl bg-[#1a1a24] flex items-center justify-center">
-                      <Folder className="w-8 lg:w-10 h-8 lg:h-10 text-[#5a5a70]" />
-                    </div>
-                    <h3 className="text-lg lg:text-xl font-semibold text-white mb-2">No files yet</h3>
-                    <p className="text-[#8888a0] mb-6 text-sm lg:text-base text-center px-4">Upload files or create a folder to get started</p>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="bg-gradient-to-r from-[#39ff14] to-[#20cc10] text-[#0a0a0f]"
-                      >
-                        <Upload className="w-4 h-4 mr-2" /> Upload Files
-                      </Button>
-                      <Button
-                        onClick={() => setShowNewFolder(true)}
-                        variant="outline"
-                        className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
-                      >
-                        <FolderPlus className="w-4 h-4 mr-2" /> New Folder
-                      </Button>
-                    </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">No files yet</h3>
+                  <p className="text-[#8888a0] mb-6">Upload files or create a folder to get started</p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-gradient-to-r from-[#39ff14] to-[#20cc10] text-[#0a0a0f]"
+                    >
+                      <Upload className="w-4 h-4 mr-2" /> Upload Files
+                    </Button>
+                    <Button
+                      onClick={() => setShowNewFolder(true)}
+                      variant="outline"
+                      className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
+                    >
+                      <FolderPlus className="w-4 h-4 mr-2" /> New Folder
+                    </Button>
                   </div>
-                ) : viewMode === 'list' ? (
-                  <div className="space-y-1">
-                    <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-[#5a5a70] uppercase tracking-wider">
-                      <div className="col-span-6">Name</div>
-                      <div className="col-span-2">Size</div>
-                      <div className="col-span-2">Modified</div>
-                      <div className="col-span-2">Actions</div>
-                    </div>
-                    {filteredFiles.map((file) => (
-                      <motion.div
-                        key={file.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`grid grid-cols-12 gap-2 lg:gap-4 px-3 lg:px-4 py-3 rounded-lg cursor-pointer transition-all ${
-                          selectedFiles.includes(file.id)
-                            ? 'bg-[#00f0ff]/10 border border-[#00f0ff]/30'
-                            : 'hover:bg-[#1a1a24]'
-                        }`}
-                        onClick={() => file.isDirectory ? navigateToFolder(file) : toggleFileSelection(file.id)}
-                      >
-                        <div className="col-span-8 lg:col-span-6 flex items-center gap-2 lg:gap-3 min-w-0">
-                          {getFileIcon(file)}
-                          <div className="min-w-0">
-                            <span className="text-white truncate block text-sm">{file.name}</span>
-                            <span className="text-xs text-[#5a5a70] lg:hidden">{formatFileSize(file.size)}</span>
-                          </div>
-                        </div>
-                        <div className="col-span-2 text-[#8888a0] text-sm items-center hidden lg:flex">
-                          {formatFileSize(file.size)}
-                        </div>
-                        <div className="col-span-2 text-[#8888a0] text-sm items-center hidden lg:flex">
-                          {file.modified}
-                        </div>
-                        <div className="col-span-4 lg:col-span-2 flex items-center justify-end lg:justify-start gap-1 lg:gap-2">
-                          {!file.isDirectory && (
-                            <>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); downloadFile(file); }}
-                                className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
-                                className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors hidden sm:block"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button 
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="bg-[#12121a] border-[#2a2a3a]">
-                              {!file.isDirectory && (
-                                <DropdownMenuItem 
-                                  onClick={() => downloadFile(file)}
-                                  className="text-white hover:bg-[#1a1a24]"
-                                >
-                                  <Download className="w-4 h-4 mr-2" /> Download
-                                </DropdownMenuItem>
-                              )}
+                </div>
+              ) : viewMode === 'list' ? (
+                <div className="space-y-1">
+                  <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-[#5a5a70] uppercase tracking-wider">
+                    <div className="col-span-6">Name</div>
+                    <div className="col-span-2">Size</div>
+                    <div className="col-span-2">Modified</div>
+                    <div className="col-span-2">Actions</div>
+                  </div>
+                  {filteredFiles.map((file) => (
+                    <motion.div
+                      key={file.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`grid grid-cols-12 gap-4 px-4 py-3 rounded-lg cursor-pointer transition-all ${
+                        selectedFiles.includes(file.id)
+                          ? 'bg-[#00f0ff]/10 border border-[#00f0ff]/30'
+                          : 'hover:bg-[#1a1a24]'
+                      }`}
+                      onClick={() => file.isDirectory ? navigateToFolder(file) : toggleFileSelection(file.id)}
+                    >
+                      <div className="col-span-6 flex items-center gap-3">
+                        {getFileIcon(file)}
+                        <span className="text-white truncate">{file.name}</span>
+                      </div>
+                      <div className="col-span-2 text-[#8888a0] text-sm flex items-center">
+                        {formatFileSize(file.size)}
+                      </div>
+                      <div className="col-span-2 text-[#8888a0] text-sm flex items-center">
+                        {file.modified}
+                      </div>
+                      <div className="col-span-2 flex items-center gap-2">
+                        {!file.isDirectory && (
+                          <>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); downloadFile(file); }}
+                              className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
+                              className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button 
+                              onClick={(e) => e.stopPropagation()}
+                              className="p-1.5 rounded-md hover:bg-[#2a2a3a] text-[#8888a0] hover:text-white transition-colors"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="bg-[#12121a] border-[#2a2a3a]">
+                            {!file.isDirectory && (
                               <DropdownMenuItem 
-                                onClick={() => deleteFile(file)}
-                                className="text-[#ff073a] hover:bg-[#1a1a24]"
+                                onClick={() => downloadFile(file)}
+                                className="text-white hover:bg-[#1a1a24]"
                               >
-                                <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                <Download className="w-4 h-4 mr-2" /> Download
                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => deleteFile(file)}
+                              className="text-[#ff073a] hover:bg-[#1a1a24]"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredFiles.map((file) => (
                     <motion.div
                       key={file.id}
@@ -1091,40 +1073,36 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
             </div>
 
             {selectedFiles.length > 0 && (
-                <div className="h-14 lg:h-16 border-t border-[#2a2a3a] px-4 lg:px-6 flex items-center justify-between bg-[#0f0f16]">
-                  <span className="text-xs lg:text-sm text-[#8888a0]">
-                    {selectedFiles.length} file(s) selected
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      onClick={() => {
-                        const selectedFile = files.find(f => f.id === selectedFiles[0])
-                        if (selectedFile) downloadFile(selectedFile)
-                      }}
-                      variant="outline" 
-                      size="sm"
-                      className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
-                    >
-                      <Download className="w-4 h-4 lg:mr-2" />
-                      <span className="hidden lg:inline">Download</span>
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        selectedFiles.forEach(id => {
-                          const file = files.find(f => f.id === id)
-                          if (file) deleteFile(file)
-                        })
-                      }}
-                      variant="outline" 
-                      size="sm"
-                      className="border-[#ff073a]/50 text-[#ff073a] hover:bg-[#ff073a]/10"
-                    >
-                      <Trash2 className="w-4 h-4 lg:mr-2" />
-                      <span className="hidden lg:inline">Delete</span>
-                    </Button>
-                  </div>
+              <div className="h-16 border-t border-[#2a2a3a] px-6 flex items-center justify-between bg-[#0f0f16]">
+                <span className="text-sm text-[#8888a0]">
+                  {selectedFiles.length} file(s) selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={() => {
+                      const selectedFile = files.find(f => f.id === selectedFiles[0])
+                      if (selectedFile) downloadFile(selectedFile)
+                    }}
+                    variant="outline" 
+                    className="border-[#2a2a3a] text-white hover:bg-[#1a1a24]"
+                  >
+                    <Download className="w-4 h-4 mr-2" /> Download
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      selectedFiles.forEach(id => {
+                        const file = files.find(f => f.id === id)
+                        if (file) deleteFile(file)
+                      })
+                    }}
+                    variant="outline" 
+                    className="border-[#ff073a]/50 text-[#ff073a] hover:bg-[#ff073a]/10"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                  </Button>
                 </div>
-              )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1309,166 +1287,37 @@ export function FileAccess({ devices, currentDevice }: FileAccessProps) {
         </DialogContent>
       </Dialog>
 
-<Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-          <DialogContent className="bg-[#12121a] border-[#2a2a3a] max-w-4xl">
-            <DialogHeader>
-              <DialogTitle className="text-white">{previewFile?.name}</DialogTitle>
-            </DialogHeader>
-            <div className="pt-4">
-              {previewFile && (
-                <div className="flex items-center justify-center min-h-[300px] bg-[#0a0a0f] rounded-lg overflow-hidden">
-                  {previewFile.type === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(previewFile.type) ? (
-                    <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-[60vh] object-contain" />
-                  ) : previewFile.type === 'video' || ['mp4', 'webm', 'mov'].includes(previewFile.type) ? (
-                    <video src={previewFile.url} controls className="max-w-full max-h-[60vh]" />
-                  ) : previewFile.type === 'audio' || ['mp3', 'wav', 'flac'].includes(previewFile.type) ? (
-                    <audio src={previewFile.url} controls className="w-full" />
-                  ) : (
-                    <div className="text-center p-8">
-                      <File className="w-16 h-16 text-[#5a5a70] mx-auto mb-4" />
-                      <p className="text-[#8888a0]">Preview not available for this file type</p>
-                      <Button
-                        onClick={() => downloadFile(previewFile)}
-                        className="mt-4 bg-gradient-to-r from-[#00f0ff] to-[#00d4ff] text-[#0a0a0f]"
-                      >
-                        <Download className="w-4 h-4 mr-2" /> Download File
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <AnimatePresence>
-          {showStoragePanel && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowStoragePanel(false)}
-                className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              />
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="lg:hidden fixed right-0 top-0 bottom-0 w-80 glass-panel border-l border-[#2a2a3a] z-50 flex flex-col"
-              >
-                <div className="flex items-center justify-between p-4 border-b border-[#2a2a3a]">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-[#00f0ff]" />
-                    <h3 className="text-lg font-semibold text-white">Storage Info</h3>
+      <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+        <DialogContent className="bg-[#12121a] border-[#2a2a3a] max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">{previewFile?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="pt-4">
+            {previewFile && (
+              <div className="flex items-center justify-center min-h-[300px] bg-[#0a0a0f] rounded-lg overflow-hidden">
+                {previewFile.type === 'image' || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(previewFile.type) ? (
+                  <img src={previewFile.url} alt={previewFile.name} className="max-w-full max-h-[60vh] object-contain" />
+                ) : previewFile.type === 'video' || ['mp4', 'webm', 'mov'].includes(previewFile.type) ? (
+                  <video src={previewFile.url} controls className="max-w-full max-h-[60vh]" />
+                ) : previewFile.type === 'audio' || ['mp3', 'wav', 'flac'].includes(previewFile.type) ? (
+                  <audio src={previewFile.url} controls className="w-full" />
+                ) : (
+                  <div className="text-center p-8">
+                    <File className="w-16 h-16 text-[#5a5a70] mx-auto mb-4" />
+                    <p className="text-[#8888a0]">Preview not available for this file type</p>
+                    <Button
+                      onClick={() => downloadFile(previewFile)}
+                      className="mt-4 bg-gradient-to-r from-[#00f0ff] to-[#00d4ff] text-[#0a0a0f]"
+                    >
+                      <Download className="w-4 h-4 mr-2" /> Download File
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => setShowStoragePanel(false)}
-                    className="p-2 rounded-lg hover:bg-[#1a1a24] transition-colors text-[#8888a0] hover:text-white"
-                  >
-                    <PanelRightClose className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-                  <div className="bg-[#1a1a24] rounded-xl p-4 mb-4">
-                    <div className="text-center mb-4">
-                      <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-[#00f0ff]/20 to-[#b829dd]/20 flex items-center justify-center">
-                        <HardDrive className="w-8 h-8 text-[#00f0ff]" />
-                      </div>
-                      <p className="text-2xl font-bold text-white">{formatFileSize(storageInfo.used)}</p>
-                      <p className="text-sm text-[#8888a0]">Used Storage</p>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between text-xs mb-2">
-                        <span className="text-[#8888a0]">Usage</span>
-                        <span className="text-[#5a5a70] flex items-center gap-1">
-                          {storageInfo.isUnlimited ? (
-                            <>
-                              <Infinity className="w-3 h-3" />
-                              Unlimited
-                            </>
-                          ) : (
-                            formatFileSize(storageInfo.total)
-                          )}
-                        </span>
-                      </div>
-                      <div className="h-3 bg-[#2a2a3a] rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ 
-                            width: storageInfo.isUnlimited 
-                              ? `${Math.min((storageInfo.used / (1024 * 1024 * 1024)) * 10, 100)}%` 
-                              : `${(storageInfo.used / storageInfo.total) * 100}%` 
-                          }}
-                          transition={{ duration: 0.8, ease: 'easeOut' }}
-                          className="h-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] rounded-full"
-                        />
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-[#5a5a70] text-center">
-                      {storageInfo.isUnlimited 
-                        ? 'No storage limit - upload freely!' 
-                        : `${formatFileSize(storageInfo.total - storageInfo.used)} available`}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="bg-[#1a1a24] rounded-xl p-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-[#39ff14]/20 flex items-center justify-center">
-                          <Folder className="w-5 h-5 text-[#39ff14]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">Files</p>
-                          <p className="text-xs text-[#8888a0]">{files.length} items in current folder</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#1a1a24] rounded-xl p-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-[#00f0ff]/20 flex items-center justify-center">
-                          <Laptop className="w-5 h-5 text-[#00f0ff]" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-white">Device</p>
-                          <p className="text-xs text-[#8888a0]">{selectedDevice?.device_name || 'No device selected'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {uploadingFiles.length > 0 && (
-                      <div className="bg-[#1a1a24] rounded-xl p-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-lg bg-[#ff6b35]/20 flex items-center justify-center">
-                            <Upload className="w-5 h-5 text-[#ff6b35]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-white">Uploads</p>
-                            <p className="text-xs text-[#8888a0]">{totalUploadStats.completedFiles}/{totalUploadStats.totalFiles} completed</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 border-t border-[#2a2a3a]">
-                  <Button
-                    onClick={() => setShowStoragePanel(false)}
-                    className="w-full bg-gradient-to-r from-[#00f0ff] to-[#b829dd] text-white"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

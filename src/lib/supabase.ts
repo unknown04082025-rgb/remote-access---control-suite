@@ -10,27 +10,6 @@ export type User = {
   email: string
   username: string
   created_at: string
-  is_admin?: boolean
-}
-
-export type FileAccessLog = {
-  id: string
-  user_id: string
-  device_id: string
-  file_name: string
-  file_path: string
-  action: string
-  accessed_at: string
-}
-
-export type ScreenShareLog = {
-  id: string
-  user_id: string
-  source_device_id: string
-  target_device_id: string
-  started_at: string
-  ended_at: string | null
-  duration_seconds: number | null
 }
 
 export type DevicePair = {
