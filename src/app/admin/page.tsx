@@ -28,7 +28,7 @@ interface UserWithDevices extends UserType {
   devices?: DevicePair[]
 }
 
-const ADMIN_PASSWORD = "SecureLink@Admin2024"
+const ADMIN_PASSWORD = "Ruhi@#$%090525"
 
 function AdminContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -114,6 +114,33 @@ function AdminContent() {
       }
     } catch (error) {
       console.error('Failed to delete user:', error)
+    }
+  }
+
+  const deleteDevice = async (deviceId: string) => {
+    if (!user) return
+    
+    try {
+      const response = await fetch(`/api/admin?deviceId=${deviceId}`, {
+        method: 'DELETE',
+        headers: { 'x-user-id': user.id }
+      })
+      
+      if (response.ok) {
+        setUsers(users.map(u => ({
+          ...u,
+          devices: u.devices?.filter(d => d.id !== deviceId)
+        })))
+        setDevices(devices.filter(d => d.id !== deviceId))
+        if (selectedUser) {
+          setSelectedUser({
+            ...selectedUser,
+            devices: selectedUser.devices?.filter(d => d.id !== deviceId)
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete device:', error)
     }
   }
 
@@ -417,45 +444,57 @@ function AdminContent() {
                         </div>
                       </div>
 
-                      <div>
-                        <h4 className="text-sm font-medium text-[#8888a0] mb-2">Devices</h4>
-                        <div className="space-y-2">
-                          {selectedUser.devices?.map((d) => (
-                            <div key={d.id} className="p-3 bg-[#0f0f16] rounded-xl">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  {d.device_name.toLowerCase().includes('phone') ? (
-                                    <Smartphone className="w-4 h-4 text-[#8888a0]" />
-                                  ) : (
-                                    <Laptop className="w-4 h-4 text-[#8888a0]" />
-                                  )}
-                                  <span className="text-white text-sm">{d.device_name}</span>
+<div>
+                          <h4 className="text-sm font-medium text-[#8888a0] mb-2">Devices</h4>
+                          <div className="space-y-2">
+                            {selectedUser.devices?.map((d) => (
+                              <div key={d.id} className="p-3 bg-[#0f0f16] rounded-xl">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    {d.device_name.toLowerCase().includes('phone') ? (
+                                      <Smartphone className="w-4 h-4 text-[#8888a0]" />
+                                    ) : (
+                                      <Laptop className="w-4 h-4 text-[#8888a0]" />
+                                    )}
+                                    <span className="text-white text-sm">{d.device_name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Circle
+                                      className={`w-2 h-2 ${
+                                        d.is_online ? 'text-[#39ff14] fill-[#39ff14]' : 'text-[#5a5a70] fill-[#5a5a70]'
+                                      }`}
+                                    />
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        deleteDevice(d.id)
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-[#ff073a]/20 transition-colors text-[#5a5a70] hover:text-[#ff073a]"
+                                      title="Remove device"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                                <Circle
-                                  className={`w-2 h-2 ${
-                                    d.is_online ? 'text-[#39ff14] fill-[#39ff14]' : 'text-[#5a5a70] fill-[#5a5a70]'
-                                  }`}
-                                />
+                                <div className="mt-2 text-xs text-[#5a5a70] space-y-1">
+                                  <p>{d.os_name} {d.os_version} - {d.browser_name}</p>
+                                  {d.location_city && (
+                                    <p className="flex items-center gap-1">
+                                      <MapPin className="w-3 h-3" />
+                                      {d.location_city}, {d.location_country}
+                                    </p>
+                                  )}
+                                  {d.ip_address && (
+                                    <p className="flex items-center gap-1">
+                                      <Globe className="w-3 h-3" />
+                                      {d.ip_address}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              <div className="mt-2 text-xs text-[#5a5a70] space-y-1">
-                                <p>{d.os_name} {d.os_version} - {d.browser_name}</p>
-                                {d.location_city && (
-                                  <p className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3" />
-                                    {d.location_city}, {d.location_country}
-                                  </p>
-                                )}
-                                {d.ip_address && (
-                                  <p className="flex items-center gap-1">
-                                    <Globe className="w-3 h-3" />
-                                    {d.ip_address}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
                     </div>
                   </motion.div>
                 ) : (

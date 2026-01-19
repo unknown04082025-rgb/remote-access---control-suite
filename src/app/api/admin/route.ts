@@ -52,6 +52,7 @@ export async function DELETE(request: NextRequest) {
   const userId = request.headers.get('x-user-id')
   const { searchParams } = new URL(request.url)
   const targetUserId = searchParams.get('userId')
+  const deviceId = searchParams.get('deviceId')
   
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -67,8 +68,21 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  if (deviceId) {
+    const { error } = await supabase
+      .from('device_pairs')
+      .delete()
+      .eq('id', deviceId)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  }
+
   if (!targetUserId) {
-    return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+    return NextResponse.json({ error: 'User ID or Device ID required' }, { status: 400 })
   }
 
   if (targetUserId === userId) {
